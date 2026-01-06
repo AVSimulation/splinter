@@ -6,8 +6,13 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 project(SPLINTER CXX)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.10)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
+
+# C++ 17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Read the SPLINTER version from version file
 file(STRINGS "version" VERSION)
