@@ -1,3 +1,6 @@
 [submodule "thirdparty/Eigen"]
 	path = thirdparty/Eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "thirdparty/Catch"]
+	path = thirdparty/Catch
+	url = https://github.com/catchorg/Catch2.git

@@ -146,7 +146,9 @@ set(LIBRARY_INSTALL_DIRECTORY ${LIBRARY_INSTALL_DIRECTORY} CACHE STRING "Absolut
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${EIGEN_DIRECTORY})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/thirdparty/Catch)
+
+# Catch2
+add_subdirectory(thirdparty/Catch)
 
 set(CINTERFACE_SRC_LIST
     include/cinterface/cinterface.h
@@ -223,7 +225,12 @@ add_library(${STATIC_LIBRARY} STATIC ${SRC_LIST})
 
 # Testing executable
 add_executable(${TEST} ${TEST_SRC_LIST})
-target_link_libraries(${TEST} ${STATIC_LIBRARY})
+target_link_libraries(${TEST}
+    PRIVATE
+        ${STATIC_LIBRARY}
+        Catch2::Catch2WithMain
+)
+
 
 # Make the directory structure expected by the MatLab interface
 # License file
