@@ -16,17 +16,17 @@ DataPoint::DataPoint()
 {
 }
 
-DataPoint::DataPoint(double x, double y)
+DataPoint::DataPoint(double x, double y, double w /*= 1.0*/)
 {
-    setData(std::vector<double>(1, x), y);
+    setData(std::vector<double>(1, x), y, w);
 }
 
-DataPoint::DataPoint(std::vector<double> x, double y)
+DataPoint::DataPoint(std::vector<double> x, double y, double w /*= 1.0*/)
 {
-    setData(x, y);
+    setData(x, y, w);
 }
 
-DataPoint::DataPoint(DenseVector x, double y)
+DataPoint::DataPoint(DenseVector x, double y, double w /*= 1.0*/)
 {
     std::vector<double> newX;
 
@@ -35,13 +35,14 @@ DataPoint::DataPoint(DenseVector x, double y)
         newX.push_back(x(i));
     }
 
-    setData(newX, y);
+    setData(newX, y, w);
 }
 
-void DataPoint::setData(const std::vector<double> &x, double y)
+void DataPoint::setData(const std::vector<double> &x, double y, double w /*= 1.0*/)
 {
     this->x = x;
     this->y = y;
+    this->w = w;
 }
 
 bool DataPoint::operator<(const DataPoint &rhs) const

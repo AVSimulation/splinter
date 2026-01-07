@@ -23,14 +23,15 @@ namespace SPLINTER
 class DataPoint
 {
 public:
-    DataPoint(double x, double y);
-    DataPoint(std::vector<double> x, double y);
-    DataPoint(DenseVector x, double y);
+    DataPoint(double x, double y, double w = 1.0);
+    DataPoint(std::vector<double> x, double y, double w = 1.0);
+    DataPoint(DenseVector x, double y, double w = 1.0);
 
     bool operator<(const DataPoint &rhs) const; // Returns false if the two are equal
 
     std::vector<double> getX() const { return x; }
     double getY() const { return y; }
+    double getW() const { return w; }
     unsigned int getDimX() const { return x.size(); }
 
 private:
@@ -38,7 +39,8 @@ private:
 
     std::vector<double> x;
     double y;
-    void setData(const std::vector<double> &x, double y);
+    double w;
+    void setData(const std::vector<double> &x, double y, double w = 1.0);
 
     friend class Serializer;
 };

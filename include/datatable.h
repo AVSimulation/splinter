@@ -35,9 +35,9 @@ public:
      * Functions for adding a sample (x,y)
      */
     void addSample(const DataPoint &sample);
-    void addSample(double x, double y);
-    void addSample(std::vector<double> x, double y);
-    void addSample(DenseVector x, double y);
+    void addSample(double x, double y, double w = 1.0);
+    void addSample(std::vector<double> x, double y, double w = 1.0);
+    void addSample(DenseVector x, double y, double w = 1.0);
     void addSample(std::initializer_list<DataPoint> samples);
 
     /*
@@ -53,7 +53,8 @@ public:
     std::vector<std::set<double>> getGrid() const { return grid; }
     std::vector< std::vector<double> > getTableX() const;
     std::vector<double> getVectorY() const;
-    
+    std::vector<double> getVectorW() const;
+
     bool isGridComplete() const;
 
     void save(const std::string &fileName) const;

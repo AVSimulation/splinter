@@ -47,19 +47,19 @@ DataTable::DataTable(const std::string &fileName)
     load(fileName);
 }
 
-void DataTable::addSample(double x, double y)
+void DataTable::addSample(double x, double y, double w /*= 1.0*/)
 {
-    addSample(DataPoint(x, y));
+    addSample(DataPoint(x, y, w));
 }
 
-void DataTable::addSample(std::vector<double> x, double y)
+void DataTable::addSample(std::vector<double> x, double y, double w /*= 1.0*/)
 {
-    addSample(DataPoint(x, y));
+    addSample(DataPoint(x, y, w));
 }
 
-void DataTable::addSample(DenseVector x, double y)
+void DataTable::addSample(DenseVector x, double y, double w /*= 1.0*/)
 {
-    addSample(DataPoint(x, y));
+    addSample(DataPoint(x, y, w));
 }
 
 void DataTable::addSample(const DataPoint &sample)
@@ -212,6 +212,18 @@ std::vector<double> DataTable::getVectorY() const
         y.push_back(it->getY());
     }
     return y;
+}
+std::vector<double> DataTable::getVectorW() const
+{
+    std::vector<double> W;
+    W.reserve(samples.size());
+
+    for (const auto& s : samples)
+    {
+        W.push_back(s.getW());
+    }
+
+    return W;
 }
 
 DataTable operator+(const DataTable &lhs, const DataTable &rhs)

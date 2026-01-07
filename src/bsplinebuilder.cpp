@@ -114,7 +114,19 @@ DenseVector BSpline::Builder::computeCoefficients(const BSpline& bspline) const
         // Weight matrix
         SparseMatrix W;
         W.resize(numSamples, numSamples);
-        W.setIdentity();
+
+        // Add weights to all data points
+        std::vector<double> weights = _data.getVectorW();
+        W.reserve(Eigen::VectorXi::Constant(numSamples, 1));
+
+        for (int i = 0; i < (int)numSamples; ++i)
+        {
+            if (weights[i] != 0.0)
+            {
+                W.insert(i, i) = weights[i];
+            }
+        }
+        W.makeCompressed();
 
         // Second order finite difference matrix
         SparseMatrix D = getSecondOrderFiniteDifferenceMatrix(bspline);
