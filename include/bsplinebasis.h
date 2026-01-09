@@ -16,7 +16,7 @@
 namespace SPLINTER
 {
 
-class BSplineBasis
+class SPLINTER_API BSplineBasis
 {
 public:
     BSplineBasis();
