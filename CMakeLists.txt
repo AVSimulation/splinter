@@ -9,6 +9,10 @@ project(SPLINTER CXX)
 cmake_minimum_required(VERSION 3.10)
 string(TOLOWER ${PROJECT_NAME} PROJECT_NAME_LOWER)
 
+# Build option
+option(SPLINTER_BUILD_TESTS "Build unit tests" ON)
+option(SPLINTER_USE_SYSTEM_EIGEN "Use system Eigen" OFF)
+
 # C++ 17
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -121,19 +125,23 @@ if(MSVC)
 elseif(GCC OR CLANG)
     # Treat warning return-type as error to avoid undefined behaviour
     # when a non-void function does not return a value.
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BITNESS_FLAG} -std=c++11 -Werror=return-type")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BITNESS_FLAG} -Werror=return-type")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wno-long-long")
 
 elseif(INTEL)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BITNESS_FLAG} -std=c++11")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${BITNESS_FLAG}")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall")
 endif()
 
-if(NOT EIGEN_DIRECTORY)
-	set(EIGEN_DIRECTORY ${DEFAULT_EIGEN_DIRECTORY})
+if(SPLINTER_USE_SYSTEM_EIGEN)
+    find_package(Eigen3 CONFIG REQUIRED)
+else()
+    if(NOT EIGEN_DIRECTORY)
+        set(EIGEN_DIRECTORY ${DEFAULT_EIGEN_DIRECTORY})
+    endif()
+    # CACHE STRING = Display the option with help text in CMakeCache.txt
+    set(EIGEN_DIRECTORY ${EIGEN_DIRECTORY} CACHE STRING "Directory where the Eigen library is located.")
 endif()
-# CACHE STRING = Display the option with help text in CMakeCache.txt
-set(EIGEN_DIRECTORY ${EIGEN_DIRECTORY} CACHE STRING "Directory where the Eigen library is located.")
 
 if(NOT HEADER_INSTALL_DIRECTORY)
     set(HEADER_INSTALL_DIRECTORY ${DEFAULT_HEADER_INSTALL_DIRECTORY})
@@ -149,11 +157,22 @@ set(LIBRARY_INSTALL_DIRECTORY ${LIBRARY_INSTALL_DIRECTORY} CACHE STRING "Absolut
 
 # Header directories
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-include_directories(${EIGEN_DIRECTORY})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test)
+
+if(SPLINTER_USE_SYSTEM_EIGEN)
+    get_target_property(_eigen_inc Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
+    include_directories(${_eigen_inc})
+else()
+    include_directories(${EIGEN_DIRECTORY})
+endif()
+
+if(SPLINTER_BUILD_TESTS)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/test)
+endif()
 
 # Catch2
-add_subdirectory(thirdparty/Catch)
+if(SPLINTER_BUILD_TESTS)
+    add_subdirectory(thirdparty/Catch)
+endif()
 
 set(CINTERFACE_SRC_LIST
     include/cinterface/cinterface.h
@@ -193,49 +212,53 @@ set(SRC_LIST
     src/serializer.cpp
     src/utilities.cpp
 )
-set(TEST_SRC_LIST
-    ${SRC_LIST}
-    test/main.cpp
-    test/approximation/bspline.cpp
-    test/approximation/pspline.cpp
-    test/general/bspline.cpp
-    test/general/datatable.cpp
-    test/general/utilities.cpp
-    test/serialization/datatable.cpp
-    test/serialization/bspline.cpp
-    test/operatoroverloads.h
-    test/operatoroverloads.cpp
-    test/testfunction.h
-    test/testfunction.cpp
-    test/testfunctions.h
-    test/testfunctions.cpp
-    test/testingutilities.h
-    test/testingutilities.cpp
-    test/bsplinetestingutilities.h
-    test/bsplinetestingutilities.cpp
-    test/serialization/eigentypes.cpp
-    test/unit/bsplinebasis1d.cpp
-    test/unit/knots.cpp)
+
+if(SPLINTER_BUILD_TESTS)
+    set(TEST_SRC_LIST
+        ${SRC_LIST}
+        test/main.cpp
+        test/approximation/bspline.cpp
+        test/approximation/pspline.cpp
+        test/general/bspline.cpp
+        test/general/datatable.cpp
+        test/general/utilities.cpp
+        test/serialization/datatable.cpp
+        test/serialization/bspline.cpp
+        test/operatoroverloads.h
+        test/operatoroverloads.cpp
+        test/testfunction.h
+        test/testfunction.cpp
+        test/testfunctions.h
+        test/testfunctions.cpp
+        test/testingutilities.h
+        test/testingutilities.cpp
+        test/bsplinetestingutilities.h
+        test/bsplinetestingutilities.cpp
+        test/serialization/eigentypes.cpp
+        test/unit/bsplinebasis1d.cpp
+        test/unit/knots.cpp)
+endif()
 
 set(SHARED_LIBRARY ${PROJECT_NAME_LOWER}-${VERSION})
 set(STATIC_LIBRARY ${PROJECT_NAME_LOWER}-static-${VERSION})
 
 set(SHARED_LIBRARY_TEST "${PROJECT_NAME_LOWER}-shared-test")
 set(STATIC_LIBRARY_TEST "${PROJECT_NAME_LOWER}-static-test")
-set(TEST "${PROJECT_NAME_LOWER}-test")
 
 # Add output library: add_library(libname [SHARED | STATIC] sourcelist)
 add_library(${SHARED_LIBRARY} SHARED ${SRC_LIST})
 add_library(${STATIC_LIBRARY} STATIC ${SRC_LIST})
 
 # Testing executable
-add_executable(${TEST} ${TEST_SRC_LIST})
-target_link_libraries(${TEST}
-    PRIVATE
-        ${STATIC_LIBRARY}
-        Catch2::Catch2WithMain
-)
-
+if(SPLINTER_BUILD_TESTS)
+    set(TEST "${PROJECT_NAME_LOWER}-test")
+    add_executable(${TEST} ${TEST_SRC_LIST})
+    target_link_libraries(${TEST}
+        PRIVATE
+            ${STATIC_LIBRARY}
+            Catch2::Catch2WithMain
+    )
+endif()
 
 # Make the directory structure expected by the MatLab interface
 # License file
@@ -283,22 +306,53 @@ install(
 )
 
 # Install the header files (including Eigen) to the header directory
+# Always install SPLINTER headers
 install(
     DIRECTORY
     ${CMAKE_CURRENT_SOURCE_DIR}/include/
-    ${EIGEN_DIRECTORY}/Eigen
-    ${EIGEN_DIRECTORY}/unsupported
     DESTINATION ${HEADER_INSTALL_DIRECTORY}/SPLINTER
 )
+
+# Only install bundled Eigen if NOT using system Eigen (e.g. VCPKG)
+if(NOT SPLINTER_USE_SYSTEM_EIGEN)
+    install(
+        DIRECTORY
+        ${EIGEN_DIRECTORY}/Eigen
+        ${EIGEN_DIRECTORY}/unsupported
+        DESTINATION ${HEADER_INSTALL_DIRECTORY}/SPLINTER
+    )
+endif()
+
 # Install the shared library file
 install(
     TARGETS ${SHARED_LIBRARY}
-    DESTINATION ${LIBRARY_INSTALL_DIRECTORY}
+    EXPORT SPLINTER
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
 )
 # Install the static library file
 install(
     TARGETS ${STATIC_LIBRARY}
-    DESTINATION ${LIBRARY_INSTALL_DIRECTORY}
+    EXPORT SPLINTER
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+#
+install(EXPORT SPLINTER
+    FILE
+      SplinterTargets.cmake
+    NAMESPACE
+      splinter::
+    DESTINATION
+      share/splinter
+)
+
+install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/cmake/SplinterConfig.cmake
+    DESTINATION "share/splinter"
 )
 
 # Doxygen documentation
