@@ -113,6 +113,7 @@ if(WINDOWS AND GCC)
 endif()
 
 if(MSVC)
+    add_compile_options(/arch:AVX)
     # User cannot specify bitness with MSVC, so set it to whatever the generator is.
     string(TOLOWER ${CMAKE_GENERATOR} GENERATOR)
     if(GENERATOR MATCHES ".*win64.*")
